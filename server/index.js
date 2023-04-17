@@ -7,16 +7,14 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { sendEmail } = require("./nodemailer");
 const {sendResetPasswordEmail} = require("./nodemailer");
-const Categorie = require("./Categories");
-const SubCategorie = require("./SubCategories");
+
 
 
 
 const app = express();
 app.use(cors());
-
-
-//const AuthRoute = require('./routes/auth')
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 const JWT_SECRET = "fkhhjbehrrufrfrjkfjkf7633EF8F4U88R040_rhrjfiorjifjirfz"
 
@@ -35,7 +33,6 @@ require("./userDetails");
 const User = mongoose.model("UserInfo");
 app.use(express.json());
 
-//app.use('/api', AuthRoute);
 app.post("/register", async (req, res) => {
   const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let activationCode = "";
@@ -226,10 +223,6 @@ app.post("/informations" ,async (req,res) => {
    const user = User.find({token : token});
 
 });
-
-
-
-
 app.get(("/verifUser/:activationCode") ,async (req,res) => {
   User.findOne({activationCode : req.params.activationCode}).then((user) => {
     if(!user){
@@ -243,9 +236,6 @@ app.get(("/verifUser/:activationCode") ,async (req,res) => {
 
   })
 });
-
-
-
 require("./ratings");
 const Rating = mongoose.model("Rating");
 app.post('/ratings', (req, res) => {
@@ -255,28 +245,262 @@ app.post('/ratings', (req, res) => {
     .then(() => res.status(201).send('Rating saved'))
     .catch(err => res.status(400).send(err));
 });
-require("./Categories");
 
-require("./SubCategories");
-app.post('/subcategories', async (req, res) => {
-  try {
-    const { name, image, description, categoryName } = req.body;
-    // First check if the given category exists
-    const category = await Categorie.findOne({ name : categoryName});
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found' });
+require("./category");
+const {Category}=require('./category');
+app.get(`/GetCategory`,async(req,res)=>{
+  const categoryList=await Category.find();
+  if(!categoryList){
+   res.status(500).json({success:false})
+  }
+  res.status(200).send(categoryList);
+ })
+app.post(`/Category`,async(req,res)=>{
+  let category=new Category({
+    name:req.body.name,
+  })
+ category=await category.save();
+ if(!category)
+ return res.status(400).send('the category cannot be created!')
+ res.send(category); });
+app.put('/Category',async(req,res)=>{
+  const category=await Category.findByIdAndUpdate(req.params.id,{
+    name:req.body.name
+  },{
+    new:true
+  })
+  if(!category)
+return res.status(400).send('the category cannot be created!')
+res.send(category);
+
+ })
+app.delete('/Category',(req,res)=>{
+  Category.findByIdAndRemove(req.params.id).then(category=>{
+    if(category){
+      return res.status(200).json({success:true,message:'the category is deleted'})
+    }else{
+      return res.status(404).json({success:false,message:'category not found'})
     }
-    const subcategory = new SubCategorie({ name, image, description, categoryName });
-    await subcategory.save();
-    res.json(subcategory);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+  }).catch(err=>{
+    return res.status(400).json({success:false,error:err})
+  })
+ })
+
+ 
+const { Exchange } = require('./exchange')
+require("./exchange");
+app.get('/exchange', async (req, res) => {
+  try {
+    const exchangeList = await Exchange.find();
+    res.status(200).json(exchangeList);
+  } catch (err) {
+    res.status(500).json({ error: err, success: false });
+  }
+});
+app.post('/exchange', async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid user' });
+    }
+
+    const exchange = new Exchange({
+      name: req.body.name,
+      type: req.body.type,
+      quantity: req.body.quantity,
+      location: req.body.location,
+      userId: req.body.userId,
+      status:req.body.status
+    });
+
+    const savedExchange = await exchange.save();
+
+    // Send notification to user
+    user.notifications.push(`You received a new exchange request for ${req.body.name}`);
+    await user.save();
+
+    res.status(201).json(savedExchange);
+  } catch (err) {
+    res.status(500).json({ error: err, success: false });
+  }
+});
+app.put('/exchange', async (req, res) => {
+  try {
+    const exchange = await Exchange.findById(req.params.id);
+    if (!exchange) {
+      return res.status(404).json({ success: false, message: 'Exchange not found' });
+    }
+
+    exchange.status = req.body.status;
+    const updatedExchange = await exchange.save();
+
+    res.status(200).json(updatedExchange);
+  } catch (err) {
+    res.status(500).json({ error: err, success: false });
+  }
+});
+
+require("./fourniture");
+const {Fourniture}=require('./fourniture');
+app.get('/Fourniture', async (req, res) => {
+  const location = req.query.location;
+  const category = req.query.category;
+
+  let filter = {};
+  if (location) {
+    filter.location = location;
+  }
+  if (category) {
+    filter.category = category;
+  }
+
+  try {
+    const fournitureList = await Fourniture.find(filter);
+    if (fournitureList.length === 0) {
+      return res.status(404).json({ success: false, message: 'No furniture found' });
+    }
+    res.status(200).json(fournitureList);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err });
+  }
+});
+app.get('/IdFourniture', async(req, res) => {
+  try {
+    const fourniture = await Fourniture.findById(req.params.id);
+    if (fourniture) {
+      return res.status(200).json({ success: true, message: 'the fourniture is founded' });
+    } else {
+      return res.status(404).json({ success: false, message: 'fourniture not found' });
+    }
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err });
+  }
+});
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/Fourniture', async (req, res) => {
+  try {
+    // Check if required fields are present in the request body
+    if (!req.body.name || !req.body.availability || !req.body.description || !req.body.category || !req.body.token) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const { token } = req.body;
+   
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log(decoded);
+    const userEmail = decoded.email;
+
+    User.findOne({ email: userEmail })
+      .then(async (user) => {
+        if (!user) {
+          return res.status(400).json({ success: false, message: 'User not found' });
+        }
+
+        let fourniture = new Fourniture({
+          name: req.body.name,
+          availability: req.body.availability,
+          description: req.body.description,
+          category: req.body.category,
+          user: userEmail,
+        });
+
+        fourniture = await fourniture.save();
+        if (!fourniture) {
+          return res.status(500).json({ success: false, message: 'Failed to create the furniture item' });
+        }
+
+        res.status(200).json(fourniture);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Failed to create the furniture item', error: error.message });
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to create the furniture item', error: err.message });
   }
 });
 
 
-require("./items");
+
+app.put('/Fourniture', async (req, res) => {
+  const fourniture = await Fourniture.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: req.body.name,
+      image: req.body.image,
+      location: req.body.location,
+      availability: req.body.availability,
+      description: req.body.description,
+      isFeatured: req.body.isFeatured,
+      category: req.body.category,
+    },
+    { new: true }
+  );
+  if (!fourniture) {
+    return res.status(400).json({ success: false, message: 'The furniture item cannot be updated!' });
+  }
+  res.status(200).json(fourniture);
+});
+app.delete('/Fourniture', async (req, res) => {
+  try {
+    const fourniture = await Fourniture.findByIdAndRemove(req.params.id);
+    if (fourniture) {
+      return res.status(200).json({ success: true, message: 'The furniture item is deleted' });
+    } else {
+      return res.status(404).json({ success: false, message: 'Furniture item not found' });
+    }
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err });
+  }
+});
+
+
+
+require("./notification");
+const { Notification } = require('./notification');
+app.get('/Notification', async (req, res) => {
+  try {
+    const notifications = await Notification.find({ recipient: req.user.id }).sort({ createdAt: -1 });
+    return res.status(200).json(notifications);
+  } catch (err) {
+    return res.status(500).json({ error: err });
+  }
+});
+
+app.post('/Notification', async (req, res) => {
+  try {
+    const recipient = await User.findById(req.body.recipient);
+    if (!recipient) {
+      return res.status(400).json({ success: false, message: 'Invalid recipient' });
+    }
+    const notification = new Notification({
+      recipient: recipient._id,
+      message: req.body.message,
+      createdAt:req.body.createdAt
+    });
+    const savedNotification = await notification.save();
+    return res.status(201).json(savedNotification);
+  } catch (err) {
+    return res.status(500).json({ error: err });
+  }
+});
+
+app.delete('/Notification', async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndRemove(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Notification deleted' });
+  } catch (err) {
+    return res.status(500).json({ error: err });
+  }
+});
+
+
 app.listen(5000, () => {
   console.log("Server running on port 5000");
 });

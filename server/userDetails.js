@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
         activationCode:String,
         resetCode: String,
         location:String,
+        
+        notifications: {
+          type: [String],
+          default: [],
+        },
     },
     {
         collection: "UserInfo" ,

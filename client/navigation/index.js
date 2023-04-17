@@ -9,14 +9,15 @@ import ConfirmEmailScreen from '../screens/ConfirmEmailScreen/ConfirmEmailScreen
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import EditProfile from '../screens/EditProfile';
 import ChangePassword from '../screens/ChangePassword';
-import HistoryScreen from '../screens/history';
 import AboutUs from '../screens/AboutUs';
 import RateUs from '../screens/RateUs';
 import ProfileScreen from '../screens/ProfileScreen';
-import CartScreen from '../screens/CartScreen';
+import AddScreen from '../screens/AddScreen';
 import ChooseCategoryScreen from '../screens/ChooseCategoryScreen';
 import AvailabilityScreen from '../screens/AvailabilityScreen';
 import LocationScreen from '../screens/LocationScreen';
+import HistoryScreen from '../screens/HistoryScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 const Stack = createStackNavigator();
 
 const Navigation = () => {
@@ -38,6 +39,17 @@ const Navigation = () => {
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
         <Stack.Screen name="ChooseCategory" component={ChooseCategoryScreen} />
         <Stack.Screen name="Availability" component={AvailabilityScreen} />
+        <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen
+            name="AddFourniture"
+            component={AddScreen}
+            options={{
+              title: 'add fourniture',
+              headerTitleStyle: {
+                color: '#3B71F3',
+              },
+            }}
+          />
         <Stack.Screen name="Location" component={LocationScreen} />
       </Stack.Navigator>
     </NavigationContainer>

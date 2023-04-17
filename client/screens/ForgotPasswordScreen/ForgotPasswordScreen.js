@@ -20,7 +20,7 @@ const ForgotPasswordScreen= ()=>{
    
   const onSubmit = (data) => {
     console.log(data.email);
-    fetch("http://192.168.1.13:5000/reset_password", {
+    fetch("http://192.168.1.21:5000/reset_password", {
       method: "POST",
       crossDomain: true,
       headers: {

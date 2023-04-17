@@ -30,7 +30,7 @@ const SignUp = () => {
 
   const onSubmit = (data) => {
     console.log(data.fname, data.lname, data.email, data.password);
-    fetch('http://192.168.1.13:5000/register', {
+    fetch('http://192.168.1.21:5000/register', {
       method: 'POST',
       crossDomain: true,
       headers: {

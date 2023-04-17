@@ -17,7 +17,7 @@ const sendEmail = async (email, activationCode) => {
         html: `
         <p>Dear user,</p>
         <p>Thank you for registering with our application. Please click the following link to confirm your email address:</p>
-        <p><a href="http://192.168.1.13:5000/verifUser/${activationCode}?redirect=exp://192.168.1.13:19000/confirm-email">Confirm Email</a></p>
+        <p><a href="http://192.168.1.21:5000/verifUser/${activationCode}?redirect=exp://192.168.1.21:19000/confirm-email">Confirm Email</a></p>
         <p>If you did not register with our website, please ignore this email.</p>
       `
       

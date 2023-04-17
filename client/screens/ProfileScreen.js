@@ -8,6 +8,7 @@ import * as SecureStore from 'expo-secure-store';
 import {  useRoute } from '@react-navigation/native';
 
 
+
 export default function ProfileScreen () {
   
 
@@ -51,7 +52,7 @@ export default function ProfileScreen () {
     async function fetchUserData() {
       try {
         const token = await SecureStore.getItemAsync('token');
-        const response = await fetch('http://192.168.1.13:5000/userData', {
+        const response = await fetch('http://192.168.1.21:5000/userData', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

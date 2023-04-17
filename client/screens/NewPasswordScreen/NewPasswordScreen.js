@@ -18,7 +18,7 @@ const NewPasswordScreen = ({ route }) => {
 
   const onSubmit = (data) => {
     console.log(data.code, data.password);
-    fetch("http://192.168.1.13:5000/ChangePassword", {
+    fetch("http://192.168.1.21:5000/ChangePassword", {
       method: "POST",
       crossDomain: true,
       headers: {
